@@ -1,5 +1,6 @@
 from mdp import MarkovDecisionProcess
 from grid import Grid
+from game import Game
 
 
 LEGAL_SQUARE_VALS = ['0', '2', '4', '8']

@@ -4,11 +4,12 @@
 import tkinter as tk
 import colors as c
 import random
+import time as t
 
-BOARD_SIZE = 4
+BOARD_SIZE = 2
 BOARD_DIM = 600
 CELL_DIM = BOARD_DIM / BOARD_SIZE
-WIN_SCORE = 2048
+WIN_SCORE = 8
 
 
 class Game(tk.Frame):
@@ -29,6 +30,10 @@ class Game(tk.Frame):
         self.master.bind('<Down>', self.down)
 
         self.mainloop()
+
+    @staticmethod
+    def delete_label(label):
+        label.pack_forget()
 
     def make_gui(self):
         self.cells = []
@@ -229,6 +234,7 @@ class Game(tk.Frame):
                 fg=c.GAME_OVER_FONT_COLOR,
                 font=c.GAME_OVER_FONT
             ).pack()
+            
         elif self.is_lose_state():
             game_over_frame = tk.Frame(self.main_grid, borderwidth=2)
             game_over_frame.place(relx=0.5, rely=0.5, anchor='center')
@@ -239,12 +245,15 @@ class Game(tk.Frame):
                 fg=c.GAME_OVER_FONT_COLOR,
                 font=c.GAME_OVER_FONT
             ).pack()
+            self.start_game()
 
     def is_win_state(self):
         return any(WIN_SCORE in row for row in self.matrix)
 
     def is_lose_state(self):
         return not any(0 in row for row in self.matrix) and not self.horizontal_move_exists() and not self.vertical_move_exists()
+
+    
 
 
 if __name__ == '__main__':
