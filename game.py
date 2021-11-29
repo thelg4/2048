@@ -32,6 +32,10 @@ class Game(tk.Frame):
 
         self.mainloop()
 
+    @staticmethod
+    def delete_label(label):
+        label.pack_forget()
+
     def make_gui(self):
         self.cells = []
         for i in range(BOARD_SIZE):
