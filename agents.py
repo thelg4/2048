@@ -6,7 +6,16 @@ class ValueIterationAgent:
         self.mdp = mdp
         self.gamma = gamma
         self.iterations = iterations
+
+        # initialize values of terminal states
         self.values = {}
+        win_states = self.mdp.get_win_states()
+        lose_states = self.mdp.get_lose_states()
+        for s in win_states:
+            self.values[s] = 1
+        for s in lose_states:
+            self.values[s] = -1
+
         self.run_value_iteration()
 
     def run_value_iteration(self):
@@ -15,6 +24,10 @@ class ValueIterationAgent:
             new_values = []
             # compute new value for each state on every iteration
             for s in self.mdp.get_states():
+                # terminal values are known
+                if self.mdp.is_terminal(s):
+                    continue
+
                 action_vals = []
                 actions = self.mdp.get_legal_actions(s)
 

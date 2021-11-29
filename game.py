@@ -5,7 +5,8 @@ import tkinter as tk
 import colors as c
 import random
 from gameboard import GameBoard
-from board import *
+from matrix import *
+from agents import ValueIterationAgent
 
 BOARD_SIZE = 2
 BOARD_DIM = 600
@@ -15,6 +16,8 @@ WIN_SCORE = 8
 
 class Game(tk.Frame):
     def __init__(self):
+        self.agent = None
+
         tk.Frame.__init__(self)
         self.grid()
         self.master.title("2048")
@@ -31,6 +34,9 @@ class Game(tk.Frame):
         self.master.bind('<Down>', self.down_handler)
 
         self.mainloop()
+
+    def set_agent(self, agent):
+        self.agent = agent
 
     @staticmethod
     def delete_label(label):
@@ -94,6 +100,10 @@ class Game(tk.Frame):
         )
         self.score = 0
 
+        mdp = GameBoard(self.matrix, BOARD_SIZE, WIN_SCORE)
+        agent = ValueIterationAgent(mdp)
+        self.set_agent(agent)
+
     def add_new_tile(self):
         row = random.randint(0, BOARD_SIZE - 1)
         col = random.randint(0, BOARD_SIZE - 1)
@@ -119,6 +129,8 @@ class Game(tk.Frame):
                     )
         self.score_label.configure(text=self.score)
         self.update_idletasks()
+        if self.agent is not None:
+            print(self.agent.get_policy(self.matrix))
 
     def left_handler(self, event):
         if horizontal_move_exists(self.matrix):
@@ -180,8 +192,7 @@ class Game(tk.Frame):
 
 
 def main():
-    game = Game()
-    game_mdp = GameBoard(game.matrix, BOARD_SIZE, WIN_SCORE)
+    Game()
 
 
 if __name__ == '__main__':
