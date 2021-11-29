@@ -21,7 +21,7 @@ CELL_COLORS = {
     256: "#fce130",
     512: "#ffdb4a",
     1024: "#f0b922",
-    2048: "fad74d"
+    2048: "#fad74d"
 }
 
 CELL_NUMBER_COLORS = {
