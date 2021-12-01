@@ -18,6 +18,8 @@ WIN_SCORE = 16
 
 
 class Game(tk.Frame):
+    
+    # list to store actions taken by the agent that lead to a win or loss
     actions = []
     
     def __init__(self):
@@ -141,13 +143,12 @@ class Game(tk.Frame):
 
         policy = self.agent.get_policy(self.matrix)
 
-        
-
         # if self.agent is not None:
         #     print(policy)        
 
-        # takes the policy and presses the assigning key
+        # takes the policy, presses the assigned key, and adds the action to a list
         if policy == None:
+            # prints the actions that led to the win or loss
             print("Game Over" + "\n" + "\nPolicy found: ")
             print(*self.actions, sep = ", ")
 
