@@ -1,22 +1,29 @@
 # Derived from Kite 2048 project
 # Source: https://www.youtube.com/watch?v=b4XP2IcI-Bg
 
+import time as t
 import tkinter as tk
 import colors as c
 import random
+from pynput.keyboard import Key, Controller
 from gameboard import GameBoard
 from matrix import *
 from agents import ValueIterationAgent
 
+
 BOARD_SIZE = 2
 BOARD_DIM = 600
 CELL_DIM = BOARD_DIM / BOARD_SIZE
-WIN_SCORE = 8
+WIN_SCORE = 16
 
 
 class Game(tk.Frame):
+    actions = []
+    
     def __init__(self):
+        
         self.agent = None
+        keyboard = Controller()
 
         tk.Frame.__init__(self)
         self.grid()
@@ -113,6 +120,8 @@ class Game(tk.Frame):
         self.matrix[row][col] = random.choice([2, 4])
 
     def update_gui(self):
+        keyboard = Controller()
+
         for i in range(BOARD_SIZE):
             for j in range(BOARD_SIZE):
                 cell_val = self.matrix[i][j]
@@ -129,8 +138,47 @@ class Game(tk.Frame):
                     )
         self.score_label.configure(text=self.score)
         self.update_idletasks()
-        if self.agent is not None:
-            print(self.agent.get_policy(self.matrix))
+
+        policy = self.agent.get_policy(self.matrix)
+
+        
+
+        # if self.agent is not None:
+        #     print(policy)        
+
+        # takes the policy and presses the assigning key
+        if policy == None:
+            print("Game Over" + "\n" + "\nPolicy found: ")
+            print(*self.actions, sep = ", ")
+
+        elif policy.__eq__("up"):
+            print("Policy: " + policy)
+            t.sleep(1)
+            keyboard.press(Key.up)
+            keyboard.release(Key.up)
+            self.actions.append(policy)
+            t.sleep(1)
+        elif policy.__eq__("down"):
+            print("Policy: " + policy)
+            t.sleep(1)
+            keyboard.press(Key.down)
+            keyboard.release(Key.down)
+            self.actions.append(policy)
+            t.sleep(1)
+        elif policy.__eq__("left"):
+            print("Policy: " + policy)
+            t.sleep(1)
+            keyboard.press(Key.left)
+            keyboard.release(Key.left)
+            self.actions.append(policy)
+            t.sleep(1)
+        elif policy.__eq__("right"):
+            print("Policy: " + policy)
+            t.sleep(1)
+            keyboard.press(Key.right)
+            keyboard.release(Key.right)
+            self.actions.append(policy)
+            t.sleep(1)    
 
     def left_handler(self, event):
         if horizontal_move_exists(self.matrix):
