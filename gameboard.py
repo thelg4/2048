@@ -5,10 +5,7 @@ from copy import deepcopy
 
 
 class GameBoard(MarkovDecisionProcess):
-    def __init__(self, matrix, board_size, win_score):
-        # initial state, passed from game instance
-        self.initial_state = matrix
-
+    def __init__(self, board_size, win_score):
         # game parameters
         self.board_size = board_size
         self.win_score = win_score
@@ -30,9 +27,6 @@ class GameBoard(MarkovDecisionProcess):
 
     def get_lose_states(self):
         return [state for state in self.get_states() if is_lose_state(state)]
-
-    def get_initial_state(self):
-        return self.initial_state
 
     def get_legal_actions(self, state):
         if self.is_terminal(state):

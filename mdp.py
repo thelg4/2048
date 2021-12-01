@@ -7,10 +7,6 @@ class MarkovDecisionProcess(ABC):
         ...
 
     @abstractmethod
-    def get_initial_state(self):
-        ...
-
-    @abstractmethod
     def get_legal_actions(self, state):
         ...
 

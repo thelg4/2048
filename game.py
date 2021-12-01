@@ -5,28 +5,33 @@ import time as t
 import tkinter as tk
 import colors as c
 import random
+import argparse
 from pynput.keyboard import Key, Controller
 from gameboard import GameBoard
 from matrix import *
-from agents import ValueIterationAgent
+from agents import ValueIterationAgent, AsynchronousValueIterationAgent, PrioritizedSweepingValueIterationAgent
 
 
 BOARD_SIZE = 2
 BOARD_DIM = 600
 CELL_DIM = BOARD_DIM / BOARD_SIZE
-WIN_SCORE = 16
-WAIT_TIME = 1
+WIN_SCORE = 32
+WAIT_TIME = 0.5
 
 
 class Game(tk.Frame):
-    
-    # list to store actions taken by the agent that lead to a win or loss
-    actions = []
-    
-    def __init__(self):
-        
-        self.agent = None
-        keyboard = Controller()
+    def __init__(self, agent='sync'):
+        mdp = GameBoard(BOARD_SIZE, WIN_SCORE)
+        self.sync_agent = ValueIterationAgent(mdp)
+        self.async_agent = AsynchronousValueIterationAgent(mdp)
+        self.sweeping_agent = PrioritizedSweepingValueIterationAgent(mdp)
+        if agent == 'sync':
+            self.active_agent = self.sync_agent
+        elif agent == 'async':
+            self.active_agent = self.async_agent
+        else:
+            self.active_agent = self.sweeping_agent
+        self.actions = []
 
         tk.Frame.__init__(self)
         self.grid()
@@ -43,10 +48,9 @@ class Game(tk.Frame):
         self.master.bind('<Up>', self.up_handler)
         self.master.bind('<Down>', self.down_handler)
 
-        self.mainloop()
+        self.make_move()
 
-    def set_agent(self, agent):
-        self.agent = agent
+        self.mainloop()
 
     @staticmethod
     def delete_label(label):
@@ -110,9 +114,45 @@ class Game(tk.Frame):
         )
         self.score = 0
 
-        mdp = GameBoard(self.matrix, BOARD_SIZE, WIN_SCORE)
-        agent = ValueIterationAgent(mdp)
-        self.set_agent(agent)
+    def make_move(self):
+        keyboard = Controller()
+        policy = self.active_agent.get_policy(self.matrix)
+
+        # takes the policy, presses the assigned key, and adds the action to a list
+        if policy is None:
+            # prints the actions that led to the win or loss
+            print(f"Game Over. Agent policy: {self.actions}")
+        elif policy.__eq__("up"):
+            print(f'Policies: {self.sync_agent.get_policy(self.matrix)} {self.async_agent.get_policy(self.matrix)} {self.sweeping_agent.get_policy(self.matrix)}')
+            t.sleep(WAIT_TIME)
+            keyboard.press(Key.up)
+            keyboard.release(Key.up)
+            self.actions.append(policy)
+            t.sleep(WAIT_TIME)
+        elif policy.__eq__("down"):
+            print(f'Policies: {self.sync_agent.get_policy(self.matrix)} {self.async_agent.get_policy(self.matrix)} {self.sweeping_agent.get_policy(self.matrix)}')
+            t.sleep(WAIT_TIME)
+            keyboard.press(Key.down)
+            keyboard.release(Key.down)
+            self.actions.append(policy)
+            t.sleep(WAIT_TIME)
+        elif policy.__eq__("left"):
+            print(f'Policies: {self.sync_agent.get_policy(self.matrix)} {self.async_agent.get_policy(self.matrix)} {self.sweeping_agent.get_policy(self.matrix)}')
+            t.sleep(WAIT_TIME)
+            keyboard.press(Key.left)
+            keyboard.release(Key.left)
+            self.actions.append(policy)
+            t.sleep(WAIT_TIME)
+        elif policy.__eq__("right"):
+            print(f'Value iteration policy: {policy}')
+            print(f'Async value iteration policy: {self.async_agent.get_policy(self.matrix)}')
+            print(f'Prioritized sweeping value iteration policy: {self.sweeping_agent.get_policy(self.matrix)}')
+            t.sleep(WAIT_TIME)
+            keyboard.press(Key.right)
+            keyboard.release(Key.right)
+            self.actions.append(policy)
+            t.sleep(WAIT_TIME)
+        self.update_idletasks()
 
     def add_new_tile(self):
         row = random.randint(0, BOARD_SIZE - 1)
@@ -123,8 +163,6 @@ class Game(tk.Frame):
         self.matrix[row][col] = random.choice([2, 4])
 
     def update_gui(self):
-        keyboard = Controller()
-
         for i in range(BOARD_SIZE):
             for j in range(BOARD_SIZE):
                 cell_val = self.matrix[i][j]
@@ -142,46 +180,6 @@ class Game(tk.Frame):
         self.score_label.configure(text=self.score)
         self.update_idletasks()
 
-        policy = self.agent.get_policy(self.matrix)
-
-        # if self.agent is not None:
-        #     print(policy)        
-
-        # takes the policy, presses the assigned key, and adds the action to a list
-        if policy == None:
-            # prints the actions that led to the win or loss
-            print("Game Over" + "\n" + "\nPolicy found: ")
-            print(*self.actions, sep = ", ")
-
-        elif policy.__eq__("up"):
-            print("Policy: " + policy)
-            t.sleep(WAIT_TIME)
-            keyboard.press(Key.up)
-            keyboard.release(Key.up)
-            self.actions.append(policy)
-            t.sleep(WAIT_TIME)
-        elif policy.__eq__("down"):
-            print("Policy: " + policy)
-            t.sleep(WAIT_TIME)
-            keyboard.press(Key.down)
-            keyboard.release(Key.down)
-            self.actions.append(policy)
-            t.sleep(WAIT_TIME)
-        elif policy.__eq__("left"):
-            print("Policy: " + policy)
-            t.sleep(WAIT_TIME)
-            keyboard.press(Key.left)
-            keyboard.release(Key.left)
-            self.actions.append(policy)
-            t.sleep(WAIT_TIME)
-        elif policy.__eq__("right"):
-            print("Policy: " + policy)
-            t.sleep(WAIT_TIME)
-            keyboard.press(Key.right)
-            keyboard.release(Key.right)
-            self.actions.append(policy)
-            t.sleep(WAIT_TIME)    
-
     def left_handler(self, event):
         if horizontal_move_exists(self.matrix):
             self.matrix, score_increment = left(self.matrix)
@@ -189,7 +187,8 @@ class Game(tk.Frame):
 
             self.add_new_tile()
             self.update_gui()
-            self.check_game_over()
+            if not self.check_game_over():
+                self.make_move()
 
     def right_handler(self, event):
         if horizontal_move_exists(self.matrix):
@@ -198,7 +197,8 @@ class Game(tk.Frame):
 
             self.add_new_tile()
             self.update_gui()
-            self.check_game_over()
+            if not self.check_game_over():
+                self.make_move()
 
     def up_handler(self, event):
         if vertical_move_exists(self.matrix):
@@ -207,7 +207,8 @@ class Game(tk.Frame):
 
             self.add_new_tile()
             self.update_gui()
-            self.check_game_over()
+            if not self.check_game_over():
+                self.make_move()
 
     def down_handler(self, event):
         if vertical_move_exists(self.matrix):
@@ -216,33 +217,47 @@ class Game(tk.Frame):
 
             self.add_new_tile()
             self.update_gui()
-            self.check_game_over()
+            if not self.check_game_over():
+                self.make_move()
 
     def check_game_over(self):
         if is_win_state(self.matrix, WIN_SCORE):
-            game_over_frame = tk.Frame(self.main_grid, borderwidth=2)
-            game_over_frame.place(relx=0.5, rely=0.5, anchor='center')
-            tk.Label(
-                game_over_frame,
-                text='You win!',
-                bg=c.WINNER_BG,
-                fg=c.GAME_OVER_FONT_COLOR,
-                font=c.GAME_OVER_FONT
-            ).pack()
+            self.update_gui_win()
+            return True
         elif is_lose_state(self.matrix):
-            game_over_frame = tk.Frame(self.main_grid, borderwidth=2)
-            game_over_frame.place(relx=0.5, rely=0.5, anchor='center')
-            tk.Label(
-                game_over_frame,
-                text='Game over!',
-                bg=c.LOSER_BG,
-                fg=c.GAME_OVER_FONT_COLOR,
-                font=c.GAME_OVER_FONT
-            ).pack()
+            self.update_gui_lose()
+            return True
+        return False
+
+    def update_gui_lose(self):
+        game_over_frame = tk.Frame(self.main_grid, borderwidth=2)
+        game_over_frame.place(relx=0.5, rely=0.5, anchor='center')
+        tk.Label(
+            game_over_frame,
+            text='Game over!',
+            bg=c.LOSER_BG,
+            fg=c.GAME_OVER_FONT_COLOR,
+            font=c.GAME_OVER_FONT
+        ).pack()
+
+    def update_gui_win(self):
+        game_over_frame = tk.Frame(self.main_grid, borderwidth=2)
+        game_over_frame.place(relx=0.5, rely=0.5, anchor='center')
+        tk.Label(
+            game_over_frame,
+            text='You win!',
+            bg=c.WINNER_BG,
+            fg=c.GAME_OVER_FONT_COLOR,
+            font=c.GAME_OVER_FONT
+        ).pack()
 
 
 def main():
-    Game()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-a', dest='agent', help='Agent to use for action selection (sync, async, sweeping).', default='sync')
+    args = parser.parse_args()
+
+    Game(args.agent)
 
 
 if __name__ == '__main__':

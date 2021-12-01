@@ -1,24 +1,43 @@
 from util import PriorityQueue
+import pickle
+import os
+from math import log2
 
 
 class ValueIterationAgent:
-    def __init__(self, mdp, gamma=0.9, iterations=100):
+    def __init__(self, mdp, gamma=0.9, iterations=100, pref='', use_cache=True):
         self.mdp = mdp
         self.gamma = gamma
         self.iterations = iterations
 
-        # initialize values of terminal states
-        self.values = {}
-        win_states = self.mdp.get_win_states()
-        lose_states = self.mdp.get_lose_states()
-        for s in win_states:
-            self.values[s] = 1
-        for s in lose_states:
-            self.values[s] = -1
+        self.cache_filepath = f'./out/{pref}value_iteration_agent_{self.mdp.board_size}_{self.mdp.win_score}.pkl'
 
-        self.run_value_iteration()
+        if use_cache and os.path.isfile(self.cache_filepath):
+            self.load_agent()
+        else:
+            # initialize values of terminal states
+            self.values = {}
+            win_states = self.mdp.get_win_states()
+            lose_states = self.mdp.get_lose_states()
+            for s in win_states:
+                self.values[s] = 1
+            for s in lose_states:
+                self.values[s] = -1
+            self.run_value_iteration()
+            self.save_agent()
+
+    def save_agent(self):
+        with open(self.cache_filepath, 'wb') as f:
+            pickle.dump(self.values, f)
+
+    def load_agent(self):
+        with open(self.cache_filepath, 'rb') as f:
+            self.values = pickle.load(f)
 
     def run_value_iteration(self):
+        num_actions = log2(self.mdp.win_score * 2)
+        num_states = pow(num_actions, pow(self.mdp.board_size, 2))
+        print(f'Required iterations (Value Iteration): {self.iterations * num_states * num_actions}')
         # run given num of iterations
         for i in range(self.iterations):
             new_values = []
@@ -72,14 +91,18 @@ class ValueIterationAgent:
 
 class AsynchronousValueIterationAgent(ValueIterationAgent):
     def __init__(self, mdp, gamma=0.9, iterations=1000):
-        ValueIterationAgent.__init__(mdp, gamma, iterations)
+        ValueIterationAgent.__init__(self, mdp, gamma, iterations, pref='async_')
 
     def run_value_iteration(self):
+        num_actions = log2(self.mdp.win_score * 2)
+        print(f'Required iterations (Asynchronous Value Iteration): {self.iterations * num_actions}')
         # run given num of iterations
         states = self.mdp.get_states()
         for i in range(self.iterations):
             # get state for curr iteration
             s = states[i % len(states)]
+            if self.mdp.is_terminal(s):
+                continue
 
             # compute new value for curr state
             action_vals = []
@@ -103,13 +126,20 @@ class AsynchronousValueIterationAgent(ValueIterationAgent):
 class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
     def __init__(self, mdp, gamma=0.9, iterations=100, theta=1e-5):
         self.theta = theta
-        ValueIterationAgent.__init__(mdp, gamma, iterations)
+        ValueIterationAgent.__init__(self, mdp, gamma, iterations, pref='sweeping_')
 
     def run_value_iteration(self):
+        num_actions = log2(self.mdp.win_score * 2)
+        num_states = pow(num_actions, pow(self.mdp.board_size, 2))
+        print(f'Required iterations (Prioritized Sweeping Value Iteration): {2 * num_states * num_actions + self.iterations * num_actions}')
+
         # 1. compute predecessors of all states
         predecessors = {}
         states = self.mdp.get_states()
         for s in states:
+            if self.mdp.is_terminal(s):
+                continue
+
             for a in self.mdp.get_legal_actions(s):
                 succ_states_and_prob = self.mdp.get_succ_states_and_prob(s, a)
                 for succ, succ_prob in succ_states_and_prob:
@@ -132,7 +162,7 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
                 q_a = self.get_q_value(s, a)
                 if q_max is None or q_a > q_max:
                     q_max = q_a
-            diff = abs(self.values[s] - q_max)
+            diff = abs(self.values[s] if s in self.values else 0 - q_max)
 
             # 3b. push s to priority queue w/ priority -diff
             pq.push(s, -diff)
@@ -159,22 +189,23 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
                 action_val = 0
                 for succ, succ_prob in succ_states_and_prob:
                     reward = self.mdp.get_reward(s, a, succ)
-                    succ_val = self.values[succ]
+                    succ_val = self.values[succ] if succ in self.values else 0
                     action_val += succ_prob * (reward + self.gamma * succ_val)
                 action_vals.append(action_val)
             # update value function for state
             self.values[s] = max(action_vals)
 
             # 4d. for each predecessor p of s...
-            for p in predecessors[s]:
-                # 4di. diff = | V(p) - Q(p,a)_max |
-                q_max = None
-                for a in self.mdp.get_legal_actions(p):
-                    q_a = self.get_q_value(p, a)
-                    if q_max is None or q_a > q_max:
-                        q_max = q_a
-                diff = abs(self.values[p] - q_max)
+            if s in predecessors:
+                for p in predecessors[s]:
+                    # 4di. diff = | V(p) - Q(p,a)_max |
+                    q_max = None
+                    for a in self.mdp.get_legal_actions(p):
+                        q_a = self.get_q_value(p, a)
+                        if q_max is None or q_a > q_max:
+                            q_max = q_a
+                    diff = abs(self.values[p] if p in self.values else 0 - q_max)
 
-                # 4dii. diff > theta -> push p to priority queue (if not already in pq with equal of lower priority)
-                if diff > self.theta:
-                    pq.update(p, -diff)
+                    # 4dii. diff > theta -> push p to priority queue (if not already in pq with equal of lower priority)
+                    if diff > self.theta:
+                        pq.update(p, -diff)
