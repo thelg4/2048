@@ -15,6 +15,7 @@ BOARD_SIZE = 2
 BOARD_DIM = 600
 CELL_DIM = BOARD_DIM / BOARD_SIZE
 WIN_SCORE = 16
+WAIT_TIME = 1
 
 
 class Game(tk.Frame):
@@ -154,32 +155,32 @@ class Game(tk.Frame):
 
         elif policy.__eq__("up"):
             print("Policy: " + policy)
-            t.sleep(1)
+            t.sleep(WAIT_TIME)
             keyboard.press(Key.up)
             keyboard.release(Key.up)
             self.actions.append(policy)
-            t.sleep(1)
+            t.sleep(WAIT_TIME)
         elif policy.__eq__("down"):
             print("Policy: " + policy)
-            t.sleep(1)
+            t.sleep(WAIT_TIME)
             keyboard.press(Key.down)
             keyboard.release(Key.down)
             self.actions.append(policy)
-            t.sleep(1)
+            t.sleep(WAIT_TIME)
         elif policy.__eq__("left"):
             print("Policy: " + policy)
-            t.sleep(1)
+            t.sleep(WAIT_TIME)
             keyboard.press(Key.left)
             keyboard.release(Key.left)
             self.actions.append(policy)
-            t.sleep(1)
+            t.sleep(WAIT_TIME)
         elif policy.__eq__("right"):
             print("Policy: " + policy)
-            t.sleep(1)
+            t.sleep(WAIT_TIME)
             keyboard.press(Key.right)
             keyboard.release(Key.right)
             self.actions.append(policy)
-            t.sleep(1)    
+            t.sleep(WAIT_TIME)    
 
     def left_handler(self, event):
         if horizontal_move_exists(self.matrix):
