@@ -1,11 +1,12 @@
 from util import PriorityQueue
 import pickle
 import os
-from math import log2
 
 
 class ValueIterationAgent:
     def __init__(self, mdp, gamma=0.9, iterations=100, pref='', use_cache=True):
+        print('Constructing value iteration agent...')
+
         self.mdp = mdp
         self.gamma = gamma
         self.iterations = iterations
@@ -23,6 +24,7 @@ class ValueIterationAgent:
                 self.values[s] = 1
             for s in lose_states:
                 self.values[s] = -1
+            print('Running value iteration...')
             self.run_value_iteration()
             self.save_agent()
 
@@ -35,10 +37,8 @@ class ValueIterationAgent:
             self.values = pickle.load(f)
 
     def run_value_iteration(self):
-        num_actions = log2(self.mdp.win_score * 2)
-        num_states = pow(num_actions, pow(self.mdp.board_size, 2))
-        print(f'Required iterations (Value Iteration): {self.iterations * num_states * num_actions}')
         # run given num of iterations
+        iter_count = 0
         for i in range(self.iterations):
             new_values = []
             # compute new value for each state on every iteration
@@ -59,6 +59,7 @@ class ValueIterationAgent:
                         r = self.mdp.get_reward(s, a, succ)
                         succ_val = self.values[succ] if succ in self.values else 0
                         action_val += succ_prob * (r + self.gamma * succ_val)
+                        iter_count += 1
                     action_vals.append(action_val)
 
                 # store new state value to be updated after iteration completed
@@ -67,6 +68,7 @@ class ValueIterationAgent:
             # iteration complete, update all state values
             for s, new_val in new_values:
                 self.values[s] = new_val
+        print(f'Performed iterations (value iteration agent): {iter_count}')
 
     def get_value(self, state):
         return self.values[state] if state in self.values else 0
@@ -90,14 +92,13 @@ class ValueIterationAgent:
 
 
 class AsynchronousValueIterationAgent(ValueIterationAgent):
-    def __init__(self, mdp, gamma=0.9, iterations=10000, use_cache=True):
+    def __init__(self, mdp, gamma=0.9, iterations=1000000, use_cache=True):
         ValueIterationAgent.__init__(self, mdp, gamma, iterations, pref='async_', use_cache=use_cache)
 
     def run_value_iteration(self):
-        num_actions = log2(self.mdp.win_score * 2)
-        print(f'Required iterations (Asynchronous Value Iteration): {self.iterations * num_actions}')
         # run given num of iterations
         states = self.mdp.get_states()
+        iter_count = 0
         for i in range(self.iterations):
             # get state for curr iteration
             s = states[i % len(states)]
@@ -117,10 +118,12 @@ class AsynchronousValueIterationAgent(ValueIterationAgent):
                     r = self.mdp.get_reward(s, a, succ)
                     succ_val = self.values[succ] if succ in self.values else 0
                     action_val += succ_prob * (r + self.gamma * succ_val)
+                    iter_count += 1
                 action_vals.append(action_val)
 
             # update curr state value
             self.values[s] = max(action_vals)
+        print(f'Performed iterations (async value iteration agent): {iter_count}')
 
 
 class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
@@ -129,13 +132,10 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
         ValueIterationAgent.__init__(self, mdp, gamma, iterations, pref='sweeping_', use_cache=use_cache)
 
     def run_value_iteration(self):
-        num_actions = log2(self.mdp.win_score * 2)
-        num_states = pow(num_actions, pow(self.mdp.board_size, 2))
-        print(f'Required iterations (Prioritized Sweeping Value Iteration): {2 * num_states * num_actions + self.iterations * num_actions}')
-
         # 1. compute predecessors of all states
         predecessors = {}
         states = self.mdp.get_states()
+        iter_count = 0
         for s in states:
             if self.mdp.is_terminal(s):
                 continue
@@ -143,6 +143,7 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
             for a in self.mdp.get_legal_actions(s):
                 succ_states_and_prob = self.mdp.get_succ_states_and_prob(s, a)
                 for succ, succ_prob in succ_states_and_prob:
+                    iter_count += 1
                     if succ_prob > 0:
                         if succ not in predecessors:
                             predecessors[succ] = []
@@ -159,6 +160,7 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
             # 3a. diff = | V(s) - Q(s,a)_max |
             q_max = None
             for a in self.mdp.get_legal_actions(s):
+                iter_count += 1
                 q_a = self.get_q_value(s, a)
                 if q_max is None or q_a > q_max:
                     q_max = q_a
@@ -171,6 +173,7 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
         for i in range(self.iterations):
             # 4a. empty priority queue -> terminate
             if pq.isEmpty():
+                print(f'Performed iterations (prioritized sweeping value iteration agent): {iter_count}')
                 return
 
             # 4b. pop s from priority queue
@@ -191,6 +194,7 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
                     reward = self.mdp.get_reward(s, a, succ)
                     succ_val = self.values[succ] if succ in self.values else 0
                     action_val += succ_prob * (reward + self.gamma * succ_val)
+                    iter_count += 1
                 action_vals.append(action_val)
             # update value function for state
             self.values[s] = max(action_vals)
@@ -201,6 +205,7 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
                     # 4di. diff = | V(p) - Q(p,a)_max |
                     q_max = None
                     for a in self.mdp.get_legal_actions(p):
+                        iter_count += 1
                         q_a = self.get_q_value(p, a)
                         if q_max is None or q_a > q_max:
                             q_max = q_a
