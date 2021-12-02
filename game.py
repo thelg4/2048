@@ -17,14 +17,15 @@ BOARD_DIM = 600
 CELL_DIM = BOARD_DIM / BOARD_SIZE
 WIN_SCORE = 32
 WAIT_TIME = 0.5
+random.seed(47)
 
 
 class Game(tk.Frame):
-    def __init__(self, agent='sync'):
+    def __init__(self, agent='sync', use_cache=True):
         mdp = GameBoard(BOARD_SIZE, WIN_SCORE)
-        self.sync_agent = ValueIterationAgent(mdp)
-        self.async_agent = AsynchronousValueIterationAgent(mdp)
-        self.sweeping_agent = PrioritizedSweepingValueIterationAgent(mdp)
+        self.sync_agent = ValueIterationAgent(mdp, use_cache=use_cache)
+        self.async_agent = AsynchronousValueIterationAgent(mdp, use_cache=use_cache)
+        self.sweeping_agent = PrioritizedSweepingValueIterationAgent(mdp, use_cache=use_cache)
         if agent == 'sync':
             self.active_agent = self.sync_agent
         elif agent == 'async':
@@ -255,9 +256,10 @@ class Game(tk.Frame):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-a', dest='agent', help='Agent to use for action selection (sync, async, sweeping).', default='sync')
+    parser.add_argument('-c', dest='use_cache', help='Boolean flag to use cache.', action='store_true')
     args = parser.parse_args()
 
-    Game(args.agent)
+    Game(args.agent, args.use_cache)
 
 
 if __name__ == '__main__':

@@ -90,8 +90,8 @@ class ValueIterationAgent:
 
 
 class AsynchronousValueIterationAgent(ValueIterationAgent):
-    def __init__(self, mdp, gamma=0.9, iterations=1000):
-        ValueIterationAgent.__init__(self, mdp, gamma, iterations, pref='async_')
+    def __init__(self, mdp, gamma=0.9, iterations=10000, use_cache=True):
+        ValueIterationAgent.__init__(self, mdp, gamma, iterations, pref='async_', use_cache=use_cache)
 
     def run_value_iteration(self):
         num_actions = log2(self.mdp.win_score * 2)
@@ -124,9 +124,9 @@ class AsynchronousValueIterationAgent(ValueIterationAgent):
 
 
 class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
-    def __init__(self, mdp, gamma=0.9, iterations=100, theta=1e-5):
+    def __init__(self, mdp, gamma=0.9, iterations=1000, theta=1e-5, use_cache=True):
         self.theta = theta
-        ValueIterationAgent.__init__(self, mdp, gamma, iterations, pref='sweeping_')
+        ValueIterationAgent.__init__(self, mdp, gamma, iterations, pref='sweeping_', use_cache=use_cache)
 
     def run_value_iteration(self):
         num_actions = log2(self.mdp.win_score * 2)
