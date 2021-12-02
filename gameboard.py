@@ -135,4 +135,4 @@ class GameBoard(MarkovDecisionProcess):
 
     def is_terminal(self, state):
         # a state is terminal if there are no legal moves or the target score has been reached
-        return is_lose_state(state) or is_win_state(state, self.win_score)
+        return is_win_state(state, self.win_score) or is_lose_state(state)

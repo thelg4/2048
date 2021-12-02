@@ -98,6 +98,7 @@ class AsynchronousValueIterationAgent(ValueIterationAgent):
     def run_value_iteration(self):
         # run given num of iterations
         states = self.mdp.get_states()
+        states.reverse()
         iter_count = 0
         for i in range(self.iterations):
             # get state for curr iteration
@@ -135,6 +136,7 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
         # 1. compute predecessors of all states
         predecessors = {}
         states = self.mdp.get_states()
+        states.reverse()
         iter_count = 0
         for s in states:
             if self.mdp.is_terminal(s):
