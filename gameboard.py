@@ -106,7 +106,7 @@ class GameBoard(MarkovDecisionProcess):
         elif action == 'down':
             state, _ = down(state)
         else:
-            print(f'Invalid action: {action}')
+            raise ValueError(f'Invalid action: {action}')
 
         # create separate successor state for each empty space being filled by either 2 or 4
         succ_states_and_prob = []

@@ -1,3 +1,5 @@
+import random
+
 # push all non-zero squares in a row to the left
 def stack(mat):
     stacked_mat = [[0] * len(mat) for _ in range(len(mat))]
@@ -73,6 +75,39 @@ def is_win_state(mat, win_score):
 # indicate whether given state is a lose state
 def is_lose_state(mat):
     return not horizontal_move_exists(mat) and not vertical_move_exists(mat)
+
+
+# generate a legal start state given board size
+def generate_start_state(board_size):
+    mat = [[0] * board_size for _ in range(board_size)]
+
+    # select two random cells to initialize as 2
+    row = random.randint(0, board_size-1)
+    col = random.randint(0, board_size-1)
+    mat[row][col] = 2
+    while mat[row][col] != 0:
+        row = random.randint(0, board_size-1)
+        col = random.randint(0, board_size-1)
+    mat[row][col] = 2
+    return mat
+
+
+# add tile (2 or 4) to empty space in given state
+def add_new_tile(mat):
+    if all([t != 0 for r in mat for t in r]):
+        return mat
+
+    board_size = len(mat)
+    row = random.randint(0, board_size-1)
+    col = random.randint(0, board_size-1)
+    while mat[row][col] != 0:
+        row = random.randint(0, board_size-1)
+        col = random.randint(0, board_size-1)
+    mat[row][col] = random.choices(
+        population=[2, 4],
+        weights=[0.9, 0.1]
+    )[0]
+    return mat
 
 
 # move left (stack, combine, stack)

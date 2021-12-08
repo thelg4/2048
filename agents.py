@@ -1,6 +1,9 @@
 from util import PriorityQueue
 import pickle
 import os
+from matrix import *
+
+# todo: evaluate agents across multiple random seeds, get success rate and compare to expected success rate of optimal policy
 
 
 class ValueIterationAgent:
@@ -35,6 +38,31 @@ class ValueIterationAgent:
     def load_agent(self):
         with open(self.cache_filepath, 'rb') as f:
             self.values = pickle.load(f)
+
+    def evaluate(self, n):
+        # perform the given number of evaluations
+        print(f'Performing {n} evaluation runs...')
+        win_count = 0
+        for _ in range(n):
+            # generate a start state
+            state = generate_start_state(self.mdp.board_size)
+
+            while not self.mdp.is_terminal(state):
+                a = self.get_policy(state)
+                if a == 'left':
+                    state, _ = left(state)
+                elif a == 'right':
+                    state, _ = right(state)
+                elif a == 'up':
+                    state, _ = up(state)
+                elif a == 'down':
+                    state, _ = down(state)
+                else:
+                    raise ValueError(f'Invalid action: {a}')
+                state = add_new_tile(state)
+            if is_win_state(state, self.mdp.win_score):
+                win_count += 1
+        return win_count/n
 
     def run_value_iteration(self):
         # run given num of iterations

@@ -13,26 +13,16 @@ from agents import ValueIterationAgent, AsynchronousValueIterationAgent, Priorit
 
 
 class Game(tk.Frame):
-    def __init__(self, agent='sync', board_size=2, win_score=32, use_cache=True):
+    def __init__(self, agent, board_size=2, win_score=32):
         # board params
+        self.agent = agent
         self.board_size = board_size
         self.win_score = win_score
         self.board_dim = 600
         self.cell_dim = self.board_dim / self.board_size
-        self.wait_time = 0.5
+        self.wait_time = 0.3
         self.actions = []
-        random.seed(47)
-        
-        # initialize value iteration agent
-        mdp = GameBoard(self.board_size, self.win_score)
-        if agent == 'sync':
-            self.agent = ValueIterationAgent(mdp, use_cache=use_cache)
-        elif agent == 'async':
-            self.agent = AsynchronousValueIterationAgent(mdp, use_cache=use_cache)
-        elif agent == 'sweeping':
-            self.agent = PrioritizedSweepingValueIterationAgent(mdp, use_cache=use_cache)
-        else:
-            raise ValueError(f'Invalid agent type: {agent}')
+        random.seed(2000)
 
         tk.Frame.__init__(self)
         self.grid()
@@ -150,7 +140,10 @@ class Game(tk.Frame):
         while self.matrix[row][col] != 0:
             row = random.randint(0, self.board_size - 1)
             col = random.randint(0, self.board_size - 1)
-        self.matrix[row][col] = random.choice([2, 4])
+        self.matrix[row][col] = random.choices(
+            population=[2, 4],
+            weights=[0.9, 0.1]
+        )[0]
 
     def update_gui(self):
         for i in range(self.board_size):
@@ -256,9 +249,32 @@ def main():
     parser.add_argument('-s', dest='board_size', help='Board dimension (default 2).', default=2)
     parser.add_argument('-w', dest='win_score', help='Winning score (default 32).', default=32)
     parser.add_argument('-c', dest='use_cache', help='Boolean flag to use cache.', action='store_true')
+    parser.add_argument('-n', dest='neval', help='Number of evaluations to perform.', default=1000)
+    parser.add_argument('-r', dest='run', help='Boolean flag to run game instance with GUI.', action='store_true')
     args = parser.parse_args()
 
-    Game(agent=args.agent, board_size=int(args.board_size), win_score=int(args.win_score), use_cache=args.use_cache)
+    agent_type = args.agent
+    board_size = int(args.board_size)
+    win_score = int(args.win_score)
+    use_cache = args.use_cache
+    n_eval = int(args.neval)
+
+    # initialize value iteration agent
+    mdp = GameBoard(board_size, win_score)
+    if agent_type == 'sync':
+        agent = ValueIterationAgent(mdp, use_cache=use_cache)
+    elif agent_type == 'async':
+        agent = AsynchronousValueIterationAgent(mdp, use_cache=use_cache)
+    elif agent_type == 'sweeping':
+        agent = PrioritizedSweepingValueIterationAgent(mdp, use_cache=use_cache)
+    else:
+        raise ValueError(f'Invalid agent type: {agent_type}')
+
+    # run evaluation on trained agent
+    print(f'{agent_type} agent win rate: {agent.evaluate(n_eval)}')
+
+    if args.run:
+        Game(agent=agent, board_size=board_size, win_score=win_score)
 
 
 if __name__ == '__main__':
