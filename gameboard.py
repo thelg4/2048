@@ -1,3 +1,7 @@
+# gameboard.py
+# ----------
+# MDP representation of 2048 game
+
 from mdp import MarkovDecisionProcess
 from itertools import product, chain
 from matrix import *

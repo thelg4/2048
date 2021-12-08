@@ -1,10 +1,12 @@
+# game.py
+# ----------
+# Runs an instance of the modified 2048 game with GUI played by given agent
 # Derived from Kite 2048 project
 # Source: https://www.youtube.com/watch?v=b4XP2IcI-Bg
 
 import time as t
 import tkinter as tk
 import colors as c
-import random
 import argparse
 from pynput.keyboard import Key, Controller
 from gameboard import GameBoard
@@ -249,15 +251,12 @@ def main():
     parser.add_argument('-s', dest='board_size', help='Board dimension (default 2).', default=2)
     parser.add_argument('-w', dest='win_score', help='Winning score (default 32).', default=32)
     parser.add_argument('-c', dest='use_cache', help='Boolean flag to use cache.', action='store_true')
-    parser.add_argument('-n', dest='neval', help='Number of evaluations to perform.', default=1000)
-    parser.add_argument('-r', dest='run', help='Boolean flag to run game instance with GUI.', action='store_true')
     args = parser.parse_args()
 
     agent_type = args.agent
     board_size = int(args.board_size)
     win_score = int(args.win_score)
     use_cache = args.use_cache
-    n_eval = int(args.neval)
 
     # initialize value iteration agent
     mdp = GameBoard(board_size, win_score)
@@ -270,11 +269,8 @@ def main():
     else:
         raise ValueError(f'Invalid agent type: {agent_type}')
 
-    # run evaluation on trained agent
-    print(f'{agent_type} agent win rate: {agent.evaluate(n_eval)}')
-
-    if args.run:
-        Game(agent=agent, board_size=board_size, win_score=win_score)
+    # run game
+    Game(agent=agent, board_size=board_size, win_score=win_score)
 
 
 if __name__ == '__main__':

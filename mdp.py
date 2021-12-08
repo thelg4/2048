@@ -1,3 +1,7 @@
+# mdp.py
+# ----------
+# MDP abstract base class
+
 from abc import ABC, abstractmethod
 
 

@@ -1,4 +1,9 @@
+# matrix.py
+# ----------
+# Specifies matrix (game state) operations
+
 import random
+
 
 # push all non-zero squares in a row to the left
 def stack(mat):

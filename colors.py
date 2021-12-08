@@ -1,3 +1,6 @@
+# colors.py
+# ----------
+# GUI color hex codes, fonts
 # Derived from Kite 2048 project
 # Source: https://www.youtube.com/watch?v=b4XP2IcI-Bg
 
