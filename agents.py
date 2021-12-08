@@ -16,6 +16,7 @@ class ValueIterationAgent:
         self.mdp = mdp
         self.gamma = gamma
         self.iterations = iterations
+        self.processes = processes
 
         self.cache_filepath = f'./out/{pref}value_iteration_agent_{self.mdp.board_size}_{self.mdp.win_score}.pkl'
 
@@ -31,7 +32,7 @@ class ValueIterationAgent:
             for s in lose_states:
                 self.values[s] = -1
             print('Running value iteration...')
-            self.run_value_iteration(processes)
+            self.run_value_iteration()
             self.save_agent()
 
     def save_agent(self):
@@ -67,13 +68,14 @@ class ValueIterationAgent:
                 win_count += 1
         return win_count/n
 
-    def run_value_iteration(self, processes):
+    def run_value_iteration(self):
         # run given num of iterations
         iter_count = 0
-        if processes != -1:
+        if self.processes != -1:
             # run update calculations across multiple subprocesses
             for i in range(self.iterations):
-                pool = Pool(processes)
+                print(f'value iteration {i+1}/{self.iterations}')
+                pool = Pool(self.processes)
                 updated_state_vals = pool.map(self.get_updated_state_value, self.mdp.get_states())
                 pool.close()
                 pool.join()
