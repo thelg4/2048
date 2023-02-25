@@ -69,7 +69,7 @@ class GameBoard(MarkovDecisionProcess):
         if len(self.states) == 0:
             self.states = [tuple(map(tuple, [list(i[x:x+self.board_size]) for x in range(0, len(i), self.board_size)]))
                            for i in product(self.possible_values, repeat=pow(self.board_size, 2))
-                           if not all([v == 0 for v in i]) and not list(i).count(self.win_score) > self.board_size]
+                           if not all([v == 0 for v in i]) and not list(i).count(self.win_score) > pow(self.board_size, 2)/2]
             self.save_states()
         return self.states
 
